@@ -1,0 +1,35 @@
+.shell {
+  display: inline-flex;
+}
+
+.link {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 17px;
+  border-radius: 999px;
+  color: var(--ember);
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(50 8 0 / 12%);
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  transition: color 240ms ease, background-color 240ms ease, box-shadow 240ms ease;
+}
+
+.light .link {
+  color: #fff;
+  background: var(--ember);
+  box-shadow: 0 8px 24px rgb(67 16 0 / 16%);
+}
+
+@media (min-width: 768px) {
+  .link {
+    min-height: 48px;
+    padding-inline: 24px;
+    font-size: 20px;
+  }
+}
