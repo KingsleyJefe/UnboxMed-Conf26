@@ -88,7 +88,10 @@ export function ConferenceLanding() {
 
       const target = sections[targetIndex];
       const background = target.dataset.transitionColor ?? "#ffffff";
-      const isHeroHandoff = activeIndexRef.current === 0 && targetIndex === 1;
+      const isHeroHandoff =
+        (activeIndexRef.current === 0 && targetIndex === 1) ||
+        (activeIndexRef.current === 1 && targetIndex === 0);
+      const transitionDirection = targetIndex > activeIndexRef.current ? 1 : -1;
 
       if (isHeroHandoff) {
         transitionRef.current = true;
@@ -96,7 +99,7 @@ export function ConferenceLanding() {
       }
 
       if (isHeroHandoff && !reduceMotion) {
-        curtainControls.set({ y: "100%" });
+        curtainControls.set({ y: transitionDirection > 0 ? "100%" : "-100%" });
         await curtainControls.start({
           y: "0%",
           transition: { duration: 0.34, ease: [0.76, 0, 0.24, 1] },
@@ -115,10 +118,10 @@ export function ConferenceLanding() {
 
         if (!reduceMotion) {
           await curtainControls.start({
-            y: "-100%",
+            y: transitionDirection > 0 ? "-100%" : "100%",
             transition: { duration: 0.44, ease: [0.76, 0, 0.24, 1] },
           });
-          curtainControls.set({ y: "100%" });
+          curtainControls.set({ y: transitionDirection > 0 ? "100%" : "-100%" });
         }
 
         transitionRef.current = false;
@@ -156,9 +159,14 @@ export function ConferenceLanding() {
     function handleWheel(event: WheelEvent) {
       if (Math.abs(event.deltaY) < 12) return;
       const isLeavingHero = activeIndexRef.current === 0 && page!.scrollTop < page!.clientHeight * 0.5;
+      const isReturningToHero =
+        activeIndexRef.current === 1 && page!.scrollTop <= sections[1].offsetTop + 4;
       if (isLeavingHero && event.deltaY > 0) {
         event.preventDefault();
         navigateTo(1);
+      } else if (isReturningToHero && event.deltaY < 0) {
+        event.preventDefault();
+        navigateTo(0);
       }
     }
 
@@ -167,12 +175,22 @@ export function ConferenceLanding() {
       if (activeIndexRef.current === 0 && ["ArrowDown", "PageDown", " "].includes(event.key)) {
         event.preventDefault();
         navigateTo(1);
+      } else if (
+        activeIndexRef.current === 1 &&
+        page!.scrollTop <= sections[1].offsetTop + 4 &&
+        ["ArrowUp", "PageUp"].includes(event.key)
+      ) {
+        event.preventDefault();
+        navigateTo(0);
       }
     }
 
     function handleTouchStart(event: TouchEvent) {
       if ((event.target as Element).closest("input, button, a")) return;
-      if (activeIndexRef.current !== 0 || page!.scrollTop >= page!.clientHeight * 0.5) return;
+      const isOnHero = activeIndexRef.current === 0 && page!.scrollTop < page!.clientHeight * 0.5;
+      const isAtManifestoStart =
+        activeIndexRef.current === 1 && page!.scrollTop <= sections[1].offsetTop + 4;
+      if (!isOnHero && !isAtManifestoStart) return;
       touchStartRef.current = event.touches[0]?.clientY ?? null;
     }
 
@@ -185,7 +203,8 @@ export function ConferenceLanding() {
       const endY = event.changedTouches[0]?.clientY ?? touchStartRef.current;
       const delta = touchStartRef.current - endY;
       touchStartRef.current = null;
-      if (delta > 42) navigateTo(1);
+      if (delta > 42 && activeIndexRef.current === 0) navigateTo(1);
+      if (delta < -42 && activeIndexRef.current === 1) navigateTo(0);
     }
 
     page.addEventListener("wheel", handleWheel, { passive: false });
@@ -320,7 +339,7 @@ export function ConferenceLanding() {
           className={styles.manifestoInner}
           initial={reduceMotion ? false : "hidden"}
           whileInView="visible"
-          viewport={{ once: true, amount: 0.18 }}
+          viewport={{ once: false, amount: 0.18 }}
           variants={staggeredReveal}
         >
           <motion.h2
@@ -356,7 +375,7 @@ export function ConferenceLanding() {
           className={styles.closingInner}
           initial={reduceMotion ? false : "hidden"}
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: false, amount: 0.2 }}
           variants={staggeredReveal}
         >
           <motion.h2 id="closing-title" variants={reveal} transition={{ duration: 0.55 }}>
@@ -408,7 +427,7 @@ export function ConferenceLanding() {
           className={styles.expectationsInner}
           initial={reduceMotion ? false : "hidden"}
           whileInView="visible"
-          viewport={{ once: true, amount: 0.16 }}
+          viewport={{ once: false, amount: 0.16 }}
           variants={staggeredReveal}
         >
           <motion.div className={styles.collage} variants={reveal} transition={{ duration: 0.7 }}>
@@ -471,7 +490,7 @@ export function ConferenceLanding() {
           className={styles.speakersInner}
           initial={reduceMotion ? false : "hidden"}
           whileInView="visible"
-          viewport={{ once: true, amount: 0.18 }}
+          viewport={{ once: false, amount: 0.18 }}
           variants={staggeredReveal}
         >
           <motion.h2 id="speakers-title" variants={reveal}>Speakers</motion.h2>
@@ -506,7 +525,7 @@ export function ConferenceLanding() {
           className={styles.locationInner}
           initial={reduceMotion ? false : "hidden"}
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: false, amount: 0.2 }}
           variants={staggeredReveal}
         >
           <motion.h2 id="location-title" variants={reveal}>Event Location</motion.h2>
@@ -539,7 +558,7 @@ export function ConferenceLanding() {
           className={styles.registrationForm}
           initial={reduceMotion ? false : "hidden"}
           whileInView="visible"
-          viewport={{ once: true, amount: 0.18 }}
+          viewport={{ once: false, amount: 0.18 }}
           variants={staggeredReveal}
           onSubmit={(event) => {
             event.preventDefault();
@@ -549,15 +568,15 @@ export function ConferenceLanding() {
           <motion.h2 id="registration-title" variants={reveal}>Save a seat</motion.h2>
           <motion.label variants={reveal}>
             <span>Your name or nickname (we don’t judge)</span>
-            <input name="name" autoComplete="name" required />
+            <input name="name" autoComplete="name" placeholder="What should we call you?" required />
           </motion.label>
           <motion.label variants={reveal}>
             <span>Email address</span>
-            <input name="email" type="email" autoComplete="email" required />
+            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
           </motion.label>
           <motion.label variants={reveal}>
             <span>Phone number (Optional)</span>
-            <input name="phone" type="tel" autoComplete="tel" />
+            <input name="phone" type="tel" autoComplete="tel" placeholder="e.g. +234 800 000 0000" />
           </motion.label>
           <motion.button
             className={styles.registrationButton}
