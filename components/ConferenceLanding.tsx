@@ -117,7 +117,12 @@ export function ConferenceLanding() {
         behavior: isHeroHandoff || reduceMotion ? "auto" : "smooth",
       });
       syncSection(targetIndex);
-      window.history.replaceState(null, "", target.id ? `#${target.id}` : window.location.pathname);
+      const cleanPageUrl = `${window.location.pathname}${window.location.search}`;
+      window.history.replaceState(
+        null,
+        "",
+        target.id === "register" ? `${cleanPageUrl}#register` : cleanPageUrl,
+      );
 
       if (isHeroHandoff) {
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));

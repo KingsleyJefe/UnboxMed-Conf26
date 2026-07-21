@@ -68,7 +68,8 @@ export async function createTicketPng(registration: Registration, appUrl: string
   const { chewy, geist, geistBold, background, glow, eventLogo, patternMark } = await loadAssets();
   const ticketCode = formatTicketCode(registration.ticketNumber);
   const qrCode = await createTicketQrDataUrl(registration, appUrl);
-  const attendeeFontSize = registration.name.length > 28 ? 30 : registration.name.length > 18 ? 36 : 43;
+  const attendeeFirstName = registration.name.trim().split(/\s+/)[0] ?? registration.name;
+  const attendeeFontSize = attendeeFirstName.length > 28 ? 30 : attendeeFirstName.length > 18 ? 36 : 43;
 
   const svg = await satori(
     <div
@@ -170,7 +171,7 @@ export async function createTicketPng(registration: Registration, appUrl: string
           gap: 20,
         }}
       >
-        <TicketDetail label="DATE & TIME" value="AUG 15, 2026" width={160} />
+        <TicketDetail label="DATE" value="AUG 15, 2026" width={160} />
         <TicketDetail label="TIME" value="10AM - 2PM" width={170} />
         <TicketDetail label="LOCATION" value="Cine 21, #10 Factory Road" width={300} />
       </div>
@@ -236,7 +237,7 @@ export async function createTicketPng(registration: Registration, appUrl: string
             whiteSpace: "nowrap",
           }}
         >
-          {registration.name}
+          {attendeeFirstName}
         </div>
       </div>
     </div>,
