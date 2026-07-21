@@ -19,7 +19,7 @@ const martianMono = Martian_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://unboxmed-conference.vercel.app"),
+  metadataBase: new URL(process.env.APP_URL ?? "https://unboxmed-conference.vercel.app"),
   title: {
     default: "Beyond the Syllabus — UnboxMed Conference 2026",
     template: "%s — UnboxMed Conference 2026",

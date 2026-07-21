@@ -1,0 +1,265 @@
+.loginPage,
+.scannerPage {
+  min-height: 100svh;
+  color: var(--cream);
+  background: var(--brown-deep);
+}
+
+.loginPage {
+  display: grid;
+  padding: 20px;
+  place-items: center;
+}
+
+.loginCard {
+  display: flex;
+  width: min(100%, 430px);
+  flex-direction: column;
+  padding: 30px 24px;
+  border: 1px solid rgb(255 201 184 / 22%);
+  border-radius: 22px;
+  background: rgb(67 16 0 / 82%);
+}
+
+.loginCard > span {
+  color: var(--ember-bright);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.loginCard h1 {
+  margin: 9px 0 28px;
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 400;
+}
+
+.loginCard label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--blush);
+  font-size: 13px;
+}
+
+.loginCard input,
+.manualForm input {
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid rgb(255 201 184 / 32%);
+  border-radius: 13px;
+  outline: none;
+  color: var(--cream);
+  background: rgb(255 255 255 / 7%);
+  font: inherit;
+}
+
+.loginCard input:focus,
+.manualForm input:focus {
+  border-color: var(--ember-bright);
+  box-shadow: 0 0 0 3px rgb(232 87 42 / 22%);
+}
+
+.loginCard button,
+.startButton,
+.result button,
+.manualForm button {
+  min-height: 50px;
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  background: var(--ember-bright);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.loginCard > button {
+  margin-top: 20px;
+}
+
+.loginCard > p {
+  min-height: 20px;
+  margin: 12px 0 0;
+  color: #ffb6a0;
+  font-size: 13px;
+  text-align: center;
+}
+
+.scannerPage {
+  display: flex;
+  flex-direction: column;
+}
+
+.scannerPage > header {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(43 10 0 / 96%);
+}
+
+.scannerPage > header div {
+  display: flex;
+  flex-direction: column;
+}
+
+.scannerPage > header span {
+  color: var(--ember-bright);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.scannerPage > header strong {
+  font-size: 16px;
+}
+
+.scannerPage > header button {
+  padding: 8px 12px;
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: 999px;
+  color: white;
+  background: transparent;
+}
+
+.cameraArea {
+  display: flex;
+  width: min(100%, 680px);
+  flex: 1;
+  flex-direction: column;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.videoFrame {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 22px;
+  background: #130500;
+}
+
+.videoFrame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.target {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(70%, 330px);
+  aspect-ratio: 1;
+  border: 4px solid white;
+  border-radius: 24px;
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 28%);
+  transform: translate(-50%, -50%);
+}
+
+.startButton {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.cameraError {
+  min-height: 20px;
+  margin: 10px 0 0;
+  color: #ffb6a0;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.manualForm {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.manualForm label {
+  display: block;
+  margin-bottom: 8px;
+  color: rgb(255 250 243 / 68%);
+  font-size: 12px;
+}
+
+.manualForm div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.manualForm button {
+  min-width: 84px;
+  padding-inline: 18px;
+}
+
+.result {
+  display: flex;
+  min-height: calc(100svh - 68px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  text-align: center;
+}
+
+.scannerPage[data-result="success"] .result {
+  background: #08783f;
+}
+
+.scannerPage[data-result="already"] .result,
+.scannerPage[data-result="invalid"] .result,
+.scannerPage[data-result="error"] .result {
+  background: #a81f12;
+}
+
+.result > span {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  border: 5px solid currentColor;
+  border-radius: 50%;
+  font-size: 58px;
+  font-weight: 800;
+}
+
+.result h1 {
+  max-width: 850px;
+  margin: 28px 0 10px;
+  font-family: var(--font-display);
+  font-size: clamp(58px, 16vw, 112px);
+  font-weight: 400;
+  line-height: 0.94;
+}
+
+.result strong {
+  font-family: var(--font-mono);
+  font-size: clamp(15px, 4vw, 25px);
+}
+
+.result p {
+  margin: 14px 0 0;
+  font-size: clamp(18px, 5vw, 28px);
+}
+
+.result button {
+  min-width: min(100%, 330px);
+  margin-top: 46px;
+  padding-inline: 24px;
+  color: var(--brown-deep);
+  background: white;
+  font-size: 22px;
+}
+
+@media (min-width: 720px) {
+  .videoFrame {
+    aspect-ratio: 4 / 3;
+  }
+}

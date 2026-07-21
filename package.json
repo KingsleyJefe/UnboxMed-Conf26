@@ -7,21 +7,39 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@fontsource/chewy": "^5.3.0",
+    "@fontsource/geist": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "@zxing/browser": "^0.2.1",
+    "drizzle-orm": "^0.45.2",
     "gsap": "latest",
+    "libphonenumber-js": "^1.13.9",
     "motion": "latest",
     "next": "latest",
+    "pdf-lib": "^1.17.1",
+    "postgres": "^3.4.9",
+    "qrcode": "^1.5.4",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "satori": "^0.28.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "drizzle-kit": "^0.31.10",
     "eslint": "latest",
     "eslint-config-next": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vitest": "^4.1.10"
   }
 }

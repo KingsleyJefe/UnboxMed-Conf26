@@ -3,8 +3,14 @@ export type SiteConfig = {
   theme: string;
   date: string;
   dateIso: string;
+  eventStartIso: string;
+  eventEndIso: string;
+  timezone: string;
   venue: string;
   registrationPath: `/${string}`;
+  registrationOpen: boolean;
+  ticketPrefix: string;
+  calendarDescription: string;
   manifesto: {
     lead: string;
     paragraphs: string[];
@@ -23,8 +29,15 @@ export const siteConfig: SiteConfig = {
   theme: "Beyond the Syllabus",
   date: "15th August, 2026",
   dateIso: "2026-08-15",
+  eventStartIso: "2026-08-15T10:00:00+01:00",
+  eventEndIso: "2026-08-15T14:00:00+01:00",
+  timezone: "Africa/Lagos",
   venue: "Cine 21, #10 Factory Rd, Aba",
   registrationPath: "/register",
+  registrationOpen: true,
+  ticketPrefix: "UC26",
+  calendarDescription:
+    "Beyond the Syllabus is an UnboxMed gathering for students and young professionals exploring ambition beyond a single title.",
   manifesto: {
     lead: "For years, we’ve been taught to follow a path.",
     paragraphs: [

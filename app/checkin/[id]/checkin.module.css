@@ -1,0 +1,43 @@
+.page {
+  min-height: 100svh;
+  padding: 22px 18px 60px;
+  color: var(--cream);
+  background: var(--brown-deep);
+}
+
+.page > a {
+  display: inline-flex;
+}
+
+.card {
+  width: min(100%, 560px);
+  margin: 72px auto 0;
+  text-align: center;
+}
+
+.card > span {
+  color: var(--ember-bright);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.card h1 {
+  margin: 10px 0;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 10vw, 58px);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.card p {
+  margin: 0 auto 28px;
+  color: rgb(255 250 243 / 72%);
+  line-height: 1.5;
+}
+
+.card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+}

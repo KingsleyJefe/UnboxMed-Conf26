@@ -51,9 +51,11 @@ export function ConferenceLanding() {
   const activeIndexRef = useRef(0);
   const transitionRef = useRef(false);
   const touchStartRef = useRef<number | null>(null);
+  const touchSectionRef = useRef<"hero" | "manifesto" | null>(null);
   const navigateRef = useRef<(index: number) => void>(() => undefined);
   const [navSurface, setNavSurface] = useState<"dark" | "light">("dark");
   const [formStatus, setFormStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageBackground, setPageBackground] = useState("#e0552a");
   const [curtainColor, setCurtainColor] = useState("#ffffff");
   const reduceMotion = useReducedMotion();
@@ -71,6 +73,10 @@ export function ConferenceLanding() {
     if (!page) return;
 
     const sections = Array.from(page.querySelectorAll<HTMLElement>(":scope > section"));
+
+    function getSectionTop(section: HTMLElement) {
+      return window.scrollY + section.getBoundingClientRect().top;
+    }
 
     function syncSection(index: number) {
       const section = sections[index];
@@ -106,8 +112,8 @@ export function ConferenceLanding() {
         });
       }
 
-      page!.scrollTo({
-        top: target.offsetTop,
+      window.scrollTo({
+        top: getSectionTop(target),
         behavior: isHeroHandoff || reduceMotion ? "auto" : "smooth",
       });
       syncSection(targetIndex);
@@ -136,9 +142,13 @@ export function ConferenceLanding() {
       0,
       hashIndex >= 0
         ? hashIndex
-        : sections.findIndex((section) => Math.abs(section.offsetTop - page.scrollTop) < page.clientHeight / 2),
+        : sections.findIndex(
+            (section) => Math.abs(getSectionTop(section) - window.scrollY) < window.innerHeight / 2,
+          ),
     );
-    if (hashIndex >= 0) page.scrollTo({ top: sections[hashIndex].offsetTop, behavior: "auto" });
+    if (hashIndex >= 0) {
+      window.scrollTo({ top: getSectionTop(sections[hashIndex]), behavior: "auto" });
+    }
     syncSection(initialIndex);
 
     let scrollTimer: ReturnType<typeof setTimeout> | undefined;
@@ -147,10 +157,10 @@ export function ConferenceLanding() {
       if (transitionRef.current) return;
       if (scrollTimer) clearTimeout(scrollTimer);
       scrollTimer = setTimeout(() => {
-        const viewportMarker = page!.scrollTop + page!.clientHeight * 0.32;
+        const viewportMarker = window.scrollY + window.innerHeight * 0.32;
         let index = 0;
         sections.forEach((section, sectionIndex) => {
-          if (section.offsetTop <= viewportMarker) index = sectionIndex;
+          if (getSectionTop(section) <= viewportMarker) index = sectionIndex;
         });
         if (index !== activeIndexRef.current) syncSection(index);
       }, 80);
@@ -158,9 +168,10 @@ export function ConferenceLanding() {
 
     function handleWheel(event: WheelEvent) {
       if (Math.abs(event.deltaY) < 12) return;
-      const isLeavingHero = activeIndexRef.current === 0 && page!.scrollTop < page!.clientHeight * 0.5;
+      const manifestoTop = getSectionTop(sections[1]);
+      const isLeavingHero = activeIndexRef.current === 0 && window.scrollY < window.innerHeight * 0.5;
       const isReturningToHero =
-        activeIndexRef.current === 1 && page!.scrollTop <= sections[1].offsetTop + 4;
+        activeIndexRef.current === 1 && window.scrollY <= manifestoTop + 4;
       if (isLeavingHero && event.deltaY > 0) {
         event.preventDefault();
         navigateTo(1);
@@ -177,7 +188,7 @@ export function ConferenceLanding() {
         navigateTo(1);
       } else if (
         activeIndexRef.current === 1 &&
-        page!.scrollTop <= sections[1].offsetTop + 4 &&
+        window.scrollY <= getSectionTop(sections[1]) + 4 &&
         ["ArrowUp", "PageUp"].includes(event.key)
       ) {
         event.preventDefault();
@@ -187,39 +198,55 @@ export function ConferenceLanding() {
 
     function handleTouchStart(event: TouchEvent) {
       if ((event.target as Element).closest("input, button, a")) return;
-      const isOnHero = activeIndexRef.current === 0 && page!.scrollTop < page!.clientHeight * 0.5;
+      const isOnHero = activeIndexRef.current === 0 && window.scrollY < window.innerHeight * 0.5;
       const isAtManifestoStart =
-        activeIndexRef.current === 1 && page!.scrollTop <= sections[1].offsetTop + 4;
+        activeIndexRef.current === 1 && window.scrollY <= getSectionTop(sections[1]) + 4;
       if (!isOnHero && !isAtManifestoStart) return;
       touchStartRef.current = event.touches[0]?.clientY ?? null;
+      touchSectionRef.current = isOnHero ? "hero" : "manifesto";
     }
 
     function handleTouchMove(event: TouchEvent) {
-      if (touchStartRef.current !== null) event.preventDefault();
+      if (touchStartRef.current === null || touchSectionRef.current === null) return;
+      const currentY = event.touches[0]?.clientY ?? touchStartRef.current;
+      const delta = touchStartRef.current - currentY;
+      const shouldRunCurtainTransition =
+        (touchSectionRef.current === "hero" && delta > 0) ||
+        (touchSectionRef.current === "manifesto" && delta < 0);
+      if (shouldRunCurtainTransition) event.preventDefault();
     }
 
     function handleTouchEnd(event: TouchEvent) {
       if (touchStartRef.current === null) return;
       const endY = event.changedTouches[0]?.clientY ?? touchStartRef.current;
       const delta = touchStartRef.current - endY;
+      const touchSection = touchSectionRef.current;
       touchStartRef.current = null;
-      if (delta > 42 && activeIndexRef.current === 0) navigateTo(1);
-      if (delta < -42 && activeIndexRef.current === 1) navigateTo(0);
+      touchSectionRef.current = null;
+      if (delta > 42 && touchSection === "hero") navigateTo(1);
+      if (delta < -42 && touchSection === "manifesto") navigateTo(0);
+    }
+
+    function handleTouchCancel() {
+      touchStartRef.current = null;
+      touchSectionRef.current = null;
     }
 
     page.addEventListener("wheel", handleWheel, { passive: false });
-    page.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
     page.addEventListener("touchstart", handleTouchStart, { passive: true });
     page.addEventListener("touchmove", handleTouchMove, { passive: false });
     page.addEventListener("touchend", handleTouchEnd, { passive: true });
+    page.addEventListener("touchcancel", handleTouchCancel, { passive: true });
     window.addEventListener("keydown", handleKeydown);
 
     return () => {
       page.removeEventListener("wheel", handleWheel);
-      page.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleScroll);
       page.removeEventListener("touchstart", handleTouchStart);
       page.removeEventListener("touchmove", handleTouchMove);
       page.removeEventListener("touchend", handleTouchEnd);
+      page.removeEventListener("touchcancel", handleTouchCancel);
       window.removeEventListener("keydown", handleKeydown);
       if (scrollTimer) clearTimeout(scrollTimer);
     };
@@ -242,6 +269,35 @@ export function ConferenceLanding() {
     const sections = Array.from(rootRef.current?.querySelectorAll<HTMLElement>(":scope > section") ?? []);
     const index = sections.findIndex((section) => section.id === sectionId);
     if (index >= 0) navigateRef.current(index);
+  }
+
+  async function handleRegistrationSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormStatus("Saving your seat…");
+    setIsSubmitting(true);
+
+    const form = new FormData(event.currentTarget);
+    try {
+      const response = await fetch("/api/registrations", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: form.get("name"),
+          email: form.get("email"),
+          phone: form.get("phone"),
+        }),
+      });
+      const result = (await response.json()) as { message?: string; ticketUrl?: string };
+      if (!response.ok || !result.ticketUrl) {
+        setFormStatus(result.message ?? "We could not save your seat. Please try again.");
+        return;
+      }
+      window.location.assign(result.ticketUrl);
+    } catch {
+      setFormStatus("Check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -560,10 +616,8 @@ export function ConferenceLanding() {
           whileInView="visible"
           viewport={{ once: false, amount: 0.18 }}
           variants={staggeredReveal}
-          onSubmit={(event) => {
-            event.preventDefault();
-            setFormStatus("Thanks! Registration confirmation will be enabled soon.");
-          }}
+          onSubmit={handleRegistrationSubmit}
+          aria-busy={isSubmitting}
         >
           <motion.h2 id="registration-title" variants={reveal}>Save a seat</motion.h2>
           <motion.label variants={reveal}>
@@ -575,17 +629,25 @@ export function ConferenceLanding() {
             <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
           </motion.label>
           <motion.label variants={reveal}>
-            <span>Phone number (Optional)</span>
-            <input name="phone" type="tel" autoComplete="tel" placeholder="e.g. +234 800 000 0000" />
+            <span>Phone number</span>
+            <input
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="e.g. +234 800 000 0000"
+              required
+            />
           </motion.label>
           <motion.button
             className={styles.registrationButton}
             type="submit"
+            disabled={isSubmitting}
             variants={reveal}
             whileHover={reduceMotion ? undefined : { scale: 1.04, rotate: -1 }}
             whileTap={reduceMotion ? undefined : { scale: 0.96 }}
           >
-            Get my ticket
+            {isSubmitting ? "Making your ticket…" : "Get my ticket"}
           </motion.button>
           <p className={styles.formStatus} aria-live="polite">{formStatus}</p>
         </motion.form>
