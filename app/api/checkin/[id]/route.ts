@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { formatTicketCode, ticketIdSchema } from "@/lib/registration";
+import { formatTicketCode, parseTicketIdentifier } from "@/lib/registration";
 import { checkInRegistration } from "@/lib/registrations";
 import { hasStaffSession } from "@/lib/staff-session";
 
@@ -11,11 +11,12 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
 
   const { id } = await params;
-  if (!ticketIdSchema.safeParse(id).success) {
+  const identifier = parseTicketIdentifier(id);
+  if (!identifier) {
     return NextResponse.json({ result: "invalid" }, { status: 404 });
   }
 
-  const outcome = await checkInRegistration(id);
+  const outcome = await checkInRegistration(identifier);
   if (outcome.kind === "invalid") {
     return NextResponse.json({ result: "invalid" }, { status: 404 });
   }

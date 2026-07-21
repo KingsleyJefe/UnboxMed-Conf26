@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDatabase } from "@/db";
 import { registrations } from "@/db/schema";
+import type { TicketIdentifier } from "@/lib/registration";
 
 export async function getRegistrationById(id: string) {
   const [registration] = await getDatabase()
@@ -11,13 +12,17 @@ export async function getRegistrationById(id: string) {
   return registration;
 }
 
-export async function checkInRegistration(id: string) {
+export async function checkInRegistration(identifier: TicketIdentifier) {
   return getDatabase().transaction(async (transaction) => {
     const checkedInAt = new Date();
+    const registrationMatches =
+      identifier.kind === "uuid"
+        ? eq(registrations.id, identifier.value)
+        : eq(registrations.ticketNumber, identifier.value);
     const [updated] = await transaction
       .update(registrations)
       .set({ status: "checked_in", checkedInAt })
-      .where(and(eq(registrations.id, id), eq(registrations.status, "valid")))
+      .where(and(registrationMatches, eq(registrations.status, "valid")))
       .returning();
 
     if (updated) return { kind: "checked_in" as const, registration: updated };
@@ -25,7 +30,7 @@ export async function checkInRegistration(id: string) {
     const [existing] = await transaction
       .select()
       .from(registrations)
-      .where(eq(registrations.id, id))
+      .where(registrationMatches)
       .limit(1);
 
     if (existing?.status === "checked_in") {

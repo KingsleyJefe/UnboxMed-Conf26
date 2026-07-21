@@ -11,13 +11,24 @@ type CheckinResult =
   | { kind: "error"; message: string };
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const TICKET_CODE_PATTERN = /^UC26-\d+$/i;
 
-function extractTicketId(value: string) {
+function comparableHostname(hostname: string) {
+  return hostname.toLowerCase().replace(/^www\./, "");
+}
+
+function extractTicketIdentifier(value: string, officialAppUrl: string) {
   const trimmed = value.trim();
   if (UUID_PATTERN.test(trimmed)) return trimmed;
+  if (TICKET_CODE_PATTERN.test(trimmed)) return trimmed.toUpperCase();
   try {
     const url = new URL(trimmed);
-    if (url.origin !== window.location.origin) return null;
+    const officialUrl = new URL(officialAppUrl);
+    const allowedHostnames = new Set([
+      comparableHostname(window.location.hostname),
+      comparableHostname(officialUrl.hostname),
+    ]);
+    if (!allowedHostnames.has(comparableHostname(url.hostname))) return null;
     const match = url.pathname.match(/^\/checkin\/([0-9a-f-]+)\/?$/i);
     return match && UUID_PATTERN.test(match[1]) ? match[1] : null;
   } catch {
@@ -43,7 +54,13 @@ function signal(success: boolean) {
   }
 }
 
-export function StaffScanner({ initiallyAuthenticated }: { initiallyAuthenticated: boolean }) {
+export function StaffScanner({
+  initiallyAuthenticated,
+  officialAppUrl,
+}: {
+  initiallyAuthenticated: boolean;
+  officialAppUrl: string;
+}) {
   const [authenticated, setAuthenticated] = useState(initiallyAuthenticated);
   const [loginError, setLoginError] = useState("");
   const [cameraError, setCameraError] = useState("");
@@ -61,8 +78,8 @@ export function StaffScanner({ initiallyAuthenticated }: { initiallyAuthenticate
 
   const checkTicket = useCallback(async (rawValue: string) => {
     if (busyRef.current) return;
-    const id = extractTicketId(rawValue);
-    if (!id) {
+    const identifier = extractTicketIdentifier(rawValue, officialAppUrl);
+    if (!identifier) {
       stopScanner();
       setResult({ kind: "invalid" });
       signal(false);
@@ -72,7 +89,7 @@ export function StaffScanner({ initiallyAuthenticated }: { initiallyAuthenticate
     busyRef.current = true;
     stopScanner();
     try {
-      const response = await fetch(`/api/checkin/${id}`, { method: "POST" });
+      const response = await fetch(`/api/checkin/${encodeURIComponent(identifier)}`, { method: "POST" });
       const payload = (await response.json()) as {
         result?: string;
         name?: string;
@@ -106,7 +123,7 @@ export function StaffScanner({ initiallyAuthenticated }: { initiallyAuthenticate
     } finally {
       busyRef.current = false;
     }
-  }, [stopScanner]);
+  }, [officialAppUrl, stopScanner]);
 
   const startScanner = useCallback(async () => {
     if (!videoRef.current || busyRef.current) return;
@@ -117,7 +134,14 @@ export function StaffScanner({ initiallyAuthenticated }: { initiallyAuthenticate
       const { BrowserQRCodeReader } = await import("@zxing/browser");
       const reader = new BrowserQRCodeReader(undefined, { delayBetweenScanAttempts: 180 });
       controlsRef.current = await reader.decodeFromConstraints(
-        { video: { facingMode: { ideal: "environment" } }, audio: false },
+        {
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        },
         videoRef.current,
         (scanResult) => {
           if (scanResult) void checkTicket(scanResult.getText());
@@ -204,7 +228,7 @@ export function StaffScanner({ initiallyAuthenticated }: { initiallyAuthenticate
       ) : (
         <section className={styles.cameraArea}>
           <div className={styles.videoFrame}>
-            <video ref={videoRef} muted playsInline aria-label="QR scanner camera preview" />
+            <video ref={videoRef} muted playsInline autoPlay aria-label="QR scanner camera preview" />
             <div className={styles.target} aria-hidden="true" />
           </div>
           <button className={styles.startButton} type="button" onClick={startScanner}>
@@ -219,8 +243,8 @@ export function StaffScanner({ initiallyAuthenticated }: { initiallyAuthenticate
               void checkTicket(value);
             }}
           >
-            <label htmlFor="ticket">Camera not working? Paste the ticket URL or UUID.</label>
-            <div><input id="ticket" name="ticket" autoCapitalize="none" autoCorrect="off" required /><button type="submit">Check</button></div>
+            <label htmlFor="ticket">Camera not working? Enter the ticket code, URL, or UUID.</label>
+            <div><input id="ticket" name="ticket" placeholder="UC26-001" autoCapitalize="characters" autoCorrect="off" required /><button type="submit">Check</button></div>
           </form>
         </section>
       )}

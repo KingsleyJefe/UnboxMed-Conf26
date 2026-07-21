@@ -58,9 +58,9 @@ export function getTicketCheckinUrl(registration: Registration, appUrl: string) 
 export async function createTicketQrDataUrl(registration: Registration, appUrl: string) {
   return QRCode.toDataURL(getTicketCheckinUrl(registration, appUrl), {
     errorCorrectionLevel: "H",
-    margin: 3,
+    margin: 4,
     width: 272,
-    color: { dark: "#270900", light: "#aaa6a3" },
+    color: { dark: "#270900", light: "#fff8f2" },
   });
 }
 

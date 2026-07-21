@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatTicketCode, registrationInputSchema, ticketIdSchema } from "@/lib/registration";
+import {
+  formatTicketCode,
+  parseTicketIdentifier,
+  registrationInputSchema,
+  ticketIdSchema,
+} from "@/lib/registration";
 
 describe("registration validation", () => {
   it("normalizes an email and Nigerian phone number", () => {
@@ -31,5 +36,15 @@ describe("registration validation", () => {
     expect(formatTicketCode(1042)).toBe("UC26-1042");
     expect(ticketIdSchema.safeParse("UC26-001").success).toBe(false);
     expect(ticketIdSchema.safeParse("22c7f95a-9c94-4f08-98fe-07f90694e514").success).toBe(true);
+  });
+
+  it("accepts both private UUIDs and visible ticket codes for staff check-in", () => {
+    expect(parseTicketIdentifier("22c7f95a-9c94-4f08-98fe-07f90694e514")).toEqual({
+      kind: "uuid",
+      value: "22c7f95a-9c94-4f08-98fe-07f90694e514",
+    });
+    expect(parseTicketIdentifier(" uc26-008 ")).toEqual({ kind: "ticketNumber", value: 8 });
+    expect(parseTicketIdentifier("UC26-000")).toBeNull();
+    expect(parseTicketIdentifier("not-a-ticket")).toBeNull();
   });
 });

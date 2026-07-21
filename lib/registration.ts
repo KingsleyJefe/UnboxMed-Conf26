@@ -26,10 +26,29 @@ export const registrationInputSchema = z.object({
 
 export const ticketIdSchema = z.string().uuid();
 
+export type TicketIdentifier =
+  | { kind: "uuid"; value: string }
+  | { kind: "ticketNumber"; value: number };
+
 export type RegistrationInput = z.infer<typeof registrationInputSchema>;
 
 export function formatTicketCode(ticketNumber: number) {
   return `${siteConfig.ticketPrefix}-${String(ticketNumber).padStart(3, "0")}`;
+}
+
+export function parseTicketIdentifier(value: string): TicketIdentifier | null {
+  const normalized = value.trim();
+  const uuid = ticketIdSchema.safeParse(normalized);
+  if (uuid.success) return { kind: "uuid", value: uuid.data };
+
+  const prefix = siteConfig.ticketPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = normalized.match(new RegExp(`^${prefix}-(\\d+)$`, "i"));
+  if (!match) return null;
+
+  const ticketNumber = Number(match[1]);
+  return Number.isSafeInteger(ticketNumber) && ticketNumber > 0
+    ? { kind: "ticketNumber", value: ticketNumber }
+    : null;
 }
 
 export function isUniqueViolation(error: unknown) {
