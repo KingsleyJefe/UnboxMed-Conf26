@@ -118,11 +118,7 @@ export function ConferenceLanding() {
       });
       syncSection(targetIndex);
       const cleanPageUrl = `${window.location.pathname}${window.location.search}`;
-      window.history.replaceState(
-        null,
-        "",
-        target.id === "register" ? `${cleanPageUrl}#register` : cleanPageUrl,
-      );
+      window.history.replaceState(null, "", cleanPageUrl);
 
       if (isHeroHandoff) {
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -153,6 +149,7 @@ export function ConferenceLanding() {
     );
     if (hashIndex >= 0) {
       window.scrollTo({ top: getSectionTop(sections[hashIndex]), behavior: "auto" });
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
     }
     syncSection(initialIndex);
 
@@ -311,7 +308,7 @@ export function ConferenceLanding() {
         <ConferenceLogo dark={navSurface === "light"} />
         <TicketButton
           surface={navSurface}
-          href="#register"
+          href="/"
           onClick={(event) => handleSectionNavigation(event, "register")}
         />
       </nav>
@@ -376,7 +373,7 @@ export function ConferenceLanding() {
 
         <motion.a
           className={styles.scrollCue}
-          href="#manifesto"
+          href="/"
           onClick={(event) => handleSectionNavigation(event, "manifesto")}
           animate={reduceMotion ? undefined : { y: [0, 7, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
@@ -463,7 +460,7 @@ export function ConferenceLanding() {
                 <Image src="/images/imessage-sticker.png" alt="I’m going, are you?" fill sizes="100px" />
               </motion.div>
               <TicketButton
-                href="#register"
+                href="/"
                 onClick={(event) => handleSectionNavigation(event, "register")}
               />
               <motion.div

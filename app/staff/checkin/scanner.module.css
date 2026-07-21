@@ -167,6 +167,29 @@
   margin-top: 14px;
 }
 
+.zoomControl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+  margin-top: 14px;
+  color: rgb(255 250 243 / 82%);
+  font-size: 12px;
+}
+
+.zoomControl input {
+  width: 100%;
+  accent-color: var(--ember-bright);
+}
+
+.cameraHint {
+  margin: 10px 0 0;
+  color: rgb(255 250 243 / 68%);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .cameraError {
   min-height: 20px;
   margin: 10px 0 0;

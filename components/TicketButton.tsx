@@ -9,7 +9,7 @@ export function TicketButton({
   className = "",
   label = "Get my ticket",
   surface = "dark",
-  href = "/register",
+  href = "/",
   onClick,
 }: {
   className?: string;

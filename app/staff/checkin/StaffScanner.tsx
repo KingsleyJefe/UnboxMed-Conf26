@@ -10,6 +10,20 @@ type CheckinResult =
   | { kind: "invalid" }
   | { kind: "error"; message: string };
 
+type CameraCapabilities = MediaTrackCapabilities & {
+  focusMode?: string[];
+  zoom?: { min: number; max: number; step: number };
+};
+
+type CameraSettings = MediaTrackSettings & { zoom?: number };
+
+type ZoomRange = {
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+};
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TICKET_CODE_PATTERN = /^UC26-\d+$/i;
 
@@ -65,15 +79,74 @@ export function StaffScanner({
   const [loginError, setLoginError] = useState("");
   const [cameraError, setCameraError] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [zoomRange, setZoomRange] = useState<ZoomRange | null>(null);
   const [result, setResult] = useState<CheckinResult | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
+  const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const busyRef = useRef(false);
 
   const stopScanner = useCallback(() => {
     controlsRef.current?.stop();
     controlsRef.current = null;
+    cameraTrackRef.current = null;
+    setZoomRange(null);
     setScanning(false);
+  }, []);
+
+  const configureCamera = useCallback(async () => {
+    const stream = videoRef.current?.srcObject;
+    if (!(stream instanceof MediaStream)) return;
+
+    const track = stream.getVideoTracks()[0];
+    if (!track) return;
+    cameraTrackRef.current = track;
+
+    let capabilities: CameraCapabilities;
+    try {
+      capabilities = track.getCapabilities() as CameraCapabilities;
+    } catch {
+      // Scanning still works on older Safari versions without capability controls.
+      return;
+    }
+    const focusMode = capabilities.focusMode?.includes("continuous")
+      ? "continuous"
+      : capabilities.focusMode?.includes("single-shot")
+        ? "single-shot"
+        : undefined;
+
+    if (focusMode) {
+      try {
+        await track.applyConstraints({
+          advanced: [{ focusMode } as MediaTrackConstraintSet],
+        });
+      } catch {
+        // Some mobile browsers advertise focus controls but reject applying them.
+      }
+    }
+
+    if (capabilities.zoom && capabilities.zoom.max > capabilities.zoom.min) {
+      const settings = track.getSettings() as CameraSettings;
+      setZoomRange({
+        min: capabilities.zoom.min,
+        max: capabilities.zoom.max,
+        step: capabilities.zoom.step || 0.1,
+        value: settings.zoom ?? capabilities.zoom.min,
+      });
+    }
+  }, []);
+
+  const updateZoom = useCallback(async (value: number) => {
+    setZoomRange((current) => (current ? { ...current, value } : current));
+    const track = cameraTrackRef.current;
+    if (!track) return;
+    try {
+      await track.applyConstraints({
+        advanced: [{ zoom: value } as MediaTrackConstraintSet],
+      });
+    } catch {
+      // Leave scanning active if a browser rejects an otherwise advertised zoom value.
+    }
   }, []);
 
   const checkTicket = useCallback(async (rawValue: string) => {
@@ -147,20 +220,21 @@ export function StaffScanner({
           if (scanResult) void checkTicket(scanResult.getText());
         },
       );
+      await configureCamera();
       setScanning(true);
     } catch {
       setCameraError("Camera access failed. Allow camera permission, use HTTPS, or enter the ticket URL below.");
       setScanning(false);
     }
-  }, [checkTicket, stopScanner]);
+  }, [checkTicket, configureCamera, stopScanner]);
 
   useEffect(() => () => stopScanner(), [stopScanner]);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!authenticated || result) return;
     const frame = requestAnimationFrame(() => void startScanner());
     return () => cancelAnimationFrame(frame);
-  }, [authenticated, startScanner]);
+  }, [authenticated, result, startScanner]);
 
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -223,7 +297,7 @@ export function StaffScanner({
           ) : null}
           {result.kind === "invalid" ? <><span>×</span><h1>Invalid ticket</h1><p>Do not admit this attendee.</p></> : null}
           {result.kind === "error" ? <><span>×</span><h1>Connection error</h1><p>{result.message}</p></> : null}
-          <button type="button" onClick={startScanner}>Scan next ticket</button>
+          <button type="button" onClick={() => setResult(null)}>Scan next ticket</button>
         </section>
       ) : (
         <section className={styles.cameraArea}>
@@ -232,8 +306,22 @@ export function StaffScanner({
             <div className={styles.target} aria-hidden="true" />
           </div>
           <button className={styles.startButton} type="button" onClick={startScanner}>
-            {scanning ? "Restart camera" : "Start camera"}
+            {scanning ? "Refocus / restart camera" : "Start camera"}
           </button>
+          {zoomRange ? (
+            <label className={styles.zoomControl}>
+              <span>Camera zoom</span>
+              <input
+                type="range"
+                min={zoomRange.min}
+                max={zoomRange.max}
+                step={zoomRange.step}
+                value={zoomRange.value}
+                onChange={(event) => void updateZoom(Number(event.currentTarget.value))}
+              />
+            </label>
+          ) : null}
+          <p className={styles.cameraHint}>Keep the QR flat, well lit, and about 15–25 cm from the camera.</p>
           <p className={styles.cameraError} aria-live="polite">{cameraError}</p>
           <form
             className={styles.manualForm}
