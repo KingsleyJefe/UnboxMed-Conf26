@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Chewy, Geist, Martian_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const chewy = Chewy({
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={`${chewy.variable} ${geist.variable} ${martianMono.variable}`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
