@@ -5,6 +5,7 @@ import {
   createTicketPdf,
   createTicketPng,
   createTicketQrDataUrl,
+  getTicketDisplayName,
   getTicketCheckinUrl,
 } from "@/lib/tickets/render";
 
@@ -20,6 +21,11 @@ const registration: Registration = {
 };
 
 describe("ticket artifacts", () => {
+  it("uses only the first name and caps it at 16 characters", () => {
+    expect(getTicketDisplayName("Ada Okafor")).toBe("Ada");
+    expect(getTicketDisplayName("  Christopherlongname Okafor  ")).toBe("Christopherlongn");
+  });
+
   it("creates the correct UTC calendar window", () => {
     const calendar = createCalendarFile();
     expect(calendar).toContain("DTSTART:20260815T090000Z");
