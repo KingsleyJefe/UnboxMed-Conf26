@@ -50,13 +50,22 @@ export async function POST(request: Request) {
           : await redrawRaffleDraw(action.drawId);
 
     if (outcome.kind === "active_exists") {
-      return json({ message: "Confirm or redraw the current selection first." }, 409);
+      return json({
+        message: "Confirm or redraw the current selection first.",
+        state: await getRaffleState(),
+      }, 409);
     }
     if (outcome.kind === "no_eligible") {
-      return json({ message: "There are no eligible checked-in attendees left." }, 409);
+      return json({
+        message: "There are no eligible checked-in attendees left.",
+        state: await getRaffleState(),
+      }, 409);
     }
     if (outcome.kind === "not_selected") {
-      return json({ message: "That draw is no longer awaiting a decision." }, 409);
+      return json({
+        message: "That draw is no longer awaiting a decision. The latest state has been restored.",
+        state: await getRaffleState(),
+      }, 409);
     }
 
     return json({ result: outcome.kind, state: await getRaffleState() }, 200);

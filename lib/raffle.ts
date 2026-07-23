@@ -65,12 +65,14 @@ export async function getRaffleState(): Promise<RaffleState> {
 
   const draws = drawRows.map(toDrawView);
   const highestRound = draws.reduce((highest, draw) => Math.max(highest, draw.roundNumber), 0);
+  const activeDraw = draws.find((draw) => draw.status === "selected");
+  const latestConfirmedDraw = draws.find((draw) => draw.status === "confirmed");
   return {
     eligibleCount: eligibleRows[0]?.value ?? 0,
     drawnCount: draws.length,
     confirmedCount: draws.filter((draw) => draw.status === "confirmed").length,
     nextRoundNumber: highestRound + 1,
-    current: draws[0] ?? null,
+    current: activeDraw ?? latestConfirmedDraw ?? null,
     history: draws.filter((draw) => draw.status === "confirmed"),
   };
 }
@@ -138,11 +140,6 @@ export async function redrawRaffleDraw(drawId: string) {
       .limit(1);
     if (!current) return { kind: "not_selected" as const };
 
-    await transaction
-      .update(raffleDraws)
-      .set({ status: "redrawn", resolvedAt: new Date() })
-      .where(eq(raffleDraws.id, current.id));
-
     const drawnRegistration = transaction
       .select({ id: raffleDraws.id })
       .from(raffleDraws)
@@ -154,6 +151,11 @@ export async function redrawRaffleDraw(drawId: string) {
       .orderBy(registrations.id);
     const replacement = pickRandomCandidate(candidates);
     if (!replacement) return { kind: "no_eligible" as const };
+
+    await transaction
+      .update(raffleDraws)
+      .set({ status: "redrawn", resolvedAt: new Date() })
+      .where(eq(raffleDraws.id, current.id));
 
     await transaction.insert(raffleDraws).values({
       id: randomUUID(),

@@ -214,7 +214,13 @@ function HostView({
         ) : (
           <div className={styles.drawReady}>
             <Image src="/images/conference-envelope.png" alt="Conference envelope" width={1008} height={1024} priority />
-            <p>{state?.eligibleCount ? `${state.eligibleCount} checked-in attendees are in the pool.` : "No eligible checked-in attendees are currently available."}</p>
+            <p>
+              {!state
+                ? "Loading the checked-in attendee pool..."
+                : state.eligibleCount
+                  ? `${state.eligibleCount} checked-in attendees are in the pool.`
+                  : "No eligible checked-in attendees are currently available."}
+            </p>
           </div>
         )}
 
@@ -229,7 +235,7 @@ function HostView({
               </button>
             </>
           ) : (
-            <button type="button" className={styles.drawButton} disabled={busy || !state?.eligibleCount} onClick={() => onAction({ action: "draw" })}>
+            <button type="button" className={styles.drawButton} disabled={busy || !state || !state.eligibleCount} onClick={() => onAction({ action: "draw" })}>
               {busy ? "Selecting..." : `Start round ${state?.nextRoundNumber ?? 1}`}
             </button>
           )}
@@ -368,6 +374,7 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
   const [busy, setBusy] = useState(false);
   const [stageReady, setStageReady] = useState(false);
   const [now, setNow] = useState(0);
+  const pollControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -384,8 +391,14 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
 
   const loadState = useCallback(async () => {
     if (!authenticated || !mode) return;
+    if (pollControllerRef.current) return;
+    const controller = new AbortController();
+    pollControllerRef.current = controller;
     try {
-      const response = await fetch("/api/raffle", { cache: "no-store" });
+      const response = await fetch("/api/raffle", {
+        cache: "no-store",
+        signal: controller.signal,
+      });
       if (response.status === 401) {
         setAuthenticated(false);
         setMode(null);
@@ -395,8 +408,13 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
       if (!response.ok) throw new Error("Could not load raffle state.");
       setState((await response.json()) as RaffleState);
       setConnected(true);
-    } catch {
+    } catch (loadError) {
+      if (loadError instanceof DOMException && loadError.name === "AbortError") return;
       setConnected(false);
+    } finally {
+      if (pollControllerRef.current === controller) {
+        pollControllerRef.current = null;
+      }
     }
   }, [authenticated, mode]);
 
@@ -407,6 +425,8 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
     return () => {
       window.cancelAnimationFrame(frame);
       window.clearInterval(interval);
+      pollControllerRef.current?.abort();
+      pollControllerRef.current = null;
     };
   }, [authenticated, loadState, mode]);
 
@@ -432,6 +452,8 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
 
   const runAction = useCallback(async (action: RaffleAction) => {
     if (busy) return;
+    pollControllerRef.current?.abort();
+    pollControllerRef.current = null;
     setBusy(true);
     setError("");
     try {
@@ -446,12 +468,14 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
         setMode(null);
         return;
       }
+      if (payload.state) {
+        setState(payload.state);
+        setConnected(true);
+      }
       if (!response.ok || !payload.state) {
         setError(payload.message ?? "Could not complete that action.");
         return;
       }
-      setState(payload.state);
-      setConnected(true);
     } catch {
       setError("Could not reach the raffle server.");
       setConnected(false);
