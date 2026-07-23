@@ -24,6 +24,8 @@ npm run db:push
 
 Or paste [`drizzle/0000_create_registrations.sql`](drizzle/0000_create_registrations.sql) into the Supabase SQL editor.
 
+For the raffle, also apply [`drizzle/0001_create_raffle_draws.sql`](drizzle/0001_create_raffle_draws.sql) after the registration migration.
+
 The table has row-level security enabled without public policies. The website connects only through the server-side Postgres URL; do not expose the database URL to the browser.
 
 ## Mailjet transactional email
@@ -42,6 +44,12 @@ Registration remains successful if email is unavailable. The confirmation page t
 Set a long shared `STAFF_CHECKIN_PIN` and an unrelated random `CHECKIN_SESSION_SECRET`. Staff visit `/staff/checkin`; the browser stores a secure HttpOnly session cookie for 12 hours.
 
 Camera scanning requires HTTPS except on localhost. The scanner also accepts a pasted `/checkin/{uuid}` URL or UUID when camera access is unavailable.
+
+## Staff raffle
+
+Visit `/staff/raffle` and sign in with the same shared staff PIN. Choose **Host controls** on the operator device and **Stage display** on the projector device. Both views use the same URL and synchronize through the persisted raffle state.
+
+Only checked-in attendees who have never been drawn are eligible. Run a rehearsal before the event, then clear only the `raffle_draws` table in Supabase before the live raffle.
 
 ## Vercel variables
 
