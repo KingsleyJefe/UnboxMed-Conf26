@@ -568,12 +568,12 @@ export function ConferenceLanding() {
                     fill
                     sizes="(max-width: 767px) 43vw, (max-width: 1199px) 22vw, 260px"
                   />
+                  <span className={`${styles.speakerCorner} ${styles.cornerTopLeft}`} aria-hidden="true" />
+                  <span className={`${styles.speakerCorner} ${styles.cornerTopRight}`} aria-hidden="true" />
+                  <span className={`${styles.speakerCorner} ${styles.cornerBottomLeft}`} aria-hidden="true" />
+                  <span className={`${styles.speakerCorner} ${styles.cornerBottomRight}`} aria-hidden="true" />
                 </div>
                 <h3>{speaker.name}</h3>
-                <span className={`${styles.speakerCorner} ${styles.cornerTopLeft}`} aria-hidden="true" />
-                <span className={`${styles.speakerCorner} ${styles.cornerTopRight}`} aria-hidden="true" />
-                <span className={`${styles.speakerCorner} ${styles.cornerBottomLeft}`} aria-hidden="true" />
-                <span className={`${styles.speakerCorner} ${styles.cornerBottomRight}`} aria-hidden="true" />
               </motion.article>
             ))}
           </motion.div>

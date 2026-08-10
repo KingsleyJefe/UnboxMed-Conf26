@@ -69,14 +69,15 @@ export const siteConfig: SiteConfig = {
   speakersIntro:
     "Meet the people bringing their stories, ideas, and energy beyond the syllabus.",
   speakers: [
-    { name: "Barr. Prince Uche", image: "/images/speakers/barr-prince-uche.webp" },
-    { name: "Rae Timzy", image: "/images/speakers/rae-timzy.webp" },
-    { name: "Esme Chan", image: "/images/speakers/esme-chan.webp" },
-    { name: "Igwe Uguru", image: "/images/speakers/igwe-uguru.webp" },
-    { name: "Chinedu Ikedi", image: "/images/speakers/chinedu-ikedi.webp" },
-    { name: "Dr. Nene Jasper", image: "/images/speakers/dr-nene-jasper.webp" },
-    { name: "Klasikal", image: "/images/speakers/klasikal.webp" },
-    { name: "Tochi Chimeremeze", image: "/images/speakers/tochi-chimeremeze.webp" },
+    { name: "Barr. Prince Uche", image: "/images/speakers/barr-prince-uche-framed.webp" },
+    { name: "Chibueze Ikedi", image: "/images/speakers/chibueze-ikedi-framed.webp" },
+    { name: "Rae Timzy", image: "/images/speakers/rae-timzy-framed.webp" },
+    { name: "Esme Chan", image: "/images/speakers/esme-chan-framed.webp" },
+    { name: "Hon. Okey Martins", image: "/images/speakers/hon-okey-martins-framed.webp" },
+    { name: "Igwe Uguru", image: "/images/speakers/igwe-uguru-framed.webp" },
+    { name: "Klasikal", image: "/images/speakers/klasikal-framed.webp" },
+    { name: "Dr. Nene Jasper Ben", image: "/images/speakers/dr-nene-jasper-framed.webp" },
+    { name: "Tochi Chimeremeze", image: "/images/speakers/tochi-chimeremeze-framed.webp" },
   ],
   directionsUrl:
     "https://www.google.com/maps/search/?api=1&query=Cine+21%2C+10+Factory+Road%2C+Aba",

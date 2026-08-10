@@ -616,9 +616,8 @@
 .speakerCard {
   position: relative;
   min-width: clamp(154px, 43vw, 184px);
-  aspect-ratio: 4 / 5;
   overflow: visible;
-  background: #2b0a00;
+  background: transparent;
   scroll-snap-align: start;
   isolation: isolate;
 }
@@ -638,33 +637,23 @@
 }
 
 .speakerPortrait {
-  position: absolute;
+  position: relative;
   z-index: 0;
-  inset: 8px 5px 38px;
+  width: 100%;
+  aspect-ratio: 920 / 1132;
+  background: #4b4949;
 }
 
 .speakerPortrait img {
-  object-fit: contain;
-  object-position: center bottom;
-  filter: drop-shadow(0 12px 16px rgb(0 0 0 / 25%));
-  transition: transform 320ms ease;
-}
-
-.speakerCard:hover .speakerPortrait img {
-  transform: scale(1.035);
+  object-fit: cover;
+  object-position: center;
 }
 
 .speakerCard h3 {
-  position: absolute;
-  z-index: 1;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  min-height: 52px;
-  margin: 0;
-  padding: 20px 10px 10px;
-  color: #fff8f2;
-  background: linear-gradient(180deg, transparent, rgb(43 10 0 / 94%) 42%);
+  min-height: 44px;
+  margin: 10px 4px 0;
+  padding: 0;
+  color: var(--ember);
   font-family: var(--font-display);
   font-size: clamp(17px, 4.8vw, 22px);
   font-weight: 400;
@@ -891,7 +880,7 @@
 
   .speakerGrid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: clamp(14px, 2.5vw, 30px);
     margin-top: 48px;
     padding: 5px;
@@ -903,8 +892,9 @@
   }
 
   .speakerCard h3 {
-    min-height: 64px;
-    padding: 26px 12px 12px;
+    min-height: 0;
+    margin-top: 14px;
+    padding: 0;
     font-size: clamp(18px, 2vw, 25px);
   }
 
