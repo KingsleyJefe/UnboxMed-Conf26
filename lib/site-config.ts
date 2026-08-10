@@ -21,6 +21,10 @@ export type SiteConfig = {
   };
   expectations: string[];
   speakersIntro: string;
+  speakers: Array<{
+    name: string;
+    image: string;
+  }>;
   directionsUrl: string;
 };
 
@@ -63,7 +67,17 @@ export const siteConfig: SiteConfig = {
     "Movie time",
   ],
   speakersIntro:
-    "We’ll be unveiling the speakers within the days, feel free to take a guess at who you think we’re bringing.",
+    "Meet the people bringing their stories, ideas, and energy beyond the syllabus.",
+  speakers: [
+    { name: "Barr. Prince Uche", image: "/images/speakers/barr-prince-uche.webp" },
+    { name: "Rae Timzy", image: "/images/speakers/rae-timzy.webp" },
+    { name: "Esme Chan", image: "/images/speakers/esme-chan.webp" },
+    { name: "Igwe Uguru", image: "/images/speakers/igwe-uguru.webp" },
+    { name: "Chinedu Ikedi", image: "/images/speakers/chinedu-ikedi.webp" },
+    { name: "Dr. Nene Jasper", image: "/images/speakers/dr-nene-jasper.webp" },
+    { name: "Klasikal", image: "/images/speakers/klasikal.webp" },
+    { name: "Tochi Chimeremeze", image: "/images/speakers/tochi-chimeremeze.webp" },
+  ],
   directionsUrl:
     "https://www.google.com/maps/search/?api=1&query=Cine+21%2C+10+Factory+Road%2C+Aba",
 };

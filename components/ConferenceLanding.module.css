@@ -600,12 +600,13 @@
 
 .speakerGrid {
   display: flex;
-  gap: 8px;
+  gap: 14px;
   margin-top: 28px;
-  padding: 5px;
+  padding: 5px 5px 12px;
   overflow-x: auto;
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
+  overscroll-behavior-inline: contain;
 }
 
 .speakerGrid::-webkit-scrollbar {
@@ -614,13 +615,12 @@
 
 .speakerCard {
   position: relative;
-  display: grid;
-  min-width: 132px;
-  aspect-ratio: 130 / 134;
-  place-items: center;
-  color: rgb(255 255 255 / 6%);
+  min-width: clamp(154px, 43vw, 184px);
+  aspect-ratio: 4 / 5;
+  overflow: visible;
   background: #2b0a00;
   scroll-snap-align: start;
+  isolation: isolate;
 }
 
 .speakerCard::before,
@@ -637,11 +637,40 @@
   pointer-events: none;
 }
 
-.speakerQuestion {
-  color: rgb(232 87 42 / 22%);
+.speakerPortrait {
+  position: absolute;
+  z-index: 0;
+  inset: 8px 5px 38px;
+}
+
+.speakerPortrait img {
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 12px 16px rgb(0 0 0 / 25%));
+  transition: transform 320ms ease;
+}
+
+.speakerCard:hover .speakerPortrait img {
+  transform: scale(1.035);
+}
+
+.speakerCard h3 {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 52px;
+  margin: 0;
+  padding: 20px 10px 10px;
+  color: #fff8f2;
+  background: linear-gradient(180deg, transparent, rgb(43 10 0 / 94%) 42%);
   font-family: var(--font-display);
-  font-size: clamp(48px, 12vw, 86px);
-  line-height: 1;
+  font-size: clamp(17px, 4.8vw, 22px);
+  font-weight: 400;
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
 }
 
 .cornerTopLeft {
@@ -862,14 +891,21 @@
 
   .speakerGrid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: clamp(14px, 2.5vw, 30px);
     margin-top: 48px;
+    padding: 5px;
     overflow: visible;
   }
 
   .speakerCard {
     min-width: 0;
+  }
+
+  .speakerCard h3 {
+    min-height: 64px;
+    padding: 26px 12px 12px;
+    font-size: clamp(18px, 2vw, 25px);
   }
 
   .locationInner {

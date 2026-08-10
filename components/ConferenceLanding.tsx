@@ -554,20 +554,27 @@ export function ConferenceLanding() {
           <motion.h2 id="speakers-title" variants={reveal}>Speakers</motion.h2>
           <motion.p variants={reveal}>{siteConfig.speakersIntro}</motion.p>
           <motion.div className={styles.speakerGrid} variants={staggeredReveal}>
-            {[1, 2, 3].map((speaker) => (
-              <motion.div
+            {siteConfig.speakers.map((speaker, index) => (
+              <motion.article
                 className={styles.speakerCard}
-                key={speaker}
+                key={speaker.name}
                 variants={reveal}
-                whileHover={reduceMotion ? undefined : { y: -8, rotate: speaker === 2 ? 1 : -1 }}
-                aria-label={`Speaker ${speaker} to be announced`}
+                whileHover={reduceMotion ? undefined : { y: -8, rotate: index % 2 ? 0.8 : -0.8 }}
               >
-                <span className={styles.speakerQuestion} aria-hidden="true">?</span>
+                <div className={styles.speakerPortrait}>
+                  <Image
+                    src={speaker.image}
+                    alt={`Portrait of ${speaker.name}`}
+                    fill
+                    sizes="(max-width: 767px) 43vw, (max-width: 1199px) 22vw, 260px"
+                  />
+                </div>
+                <h3>{speaker.name}</h3>
                 <span className={`${styles.speakerCorner} ${styles.cornerTopLeft}`} aria-hidden="true" />
                 <span className={`${styles.speakerCorner} ${styles.cornerTopRight}`} aria-hidden="true" />
                 <span className={`${styles.speakerCorner} ${styles.cornerBottomLeft}`} aria-hidden="true" />
                 <span className={`${styles.speakerCorner} ${styles.cornerBottomRight}`} aria-hidden="true" />
-              </motion.div>
+              </motion.article>
             ))}
           </motion.div>
         </motion.div>
