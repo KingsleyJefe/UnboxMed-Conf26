@@ -1,4 +1,5 @@
 export type RaffleDrawStatus = "selected" | "confirmed" | "redrawn";
+export type RaffleMode = "rehearsal" | "live";
 
 export type RaffleDrawView = {
   id: string;
@@ -13,6 +14,8 @@ export type RaffleDrawView = {
 };
 
 export type RaffleState = {
+  mode: RaffleMode;
+  revision: number;
   eligibleCount: number;
   drawnCount: number;
   confirmedCount: number;
@@ -22,6 +25,6 @@ export type RaffleState = {
 };
 
 export type RaffleActionResult = {
-  result: "selected" | "confirmed" | "redrawn";
+  result: "selected" | "confirmed" | "redrawn" | "reset";
   state: RaffleState;
 };

@@ -4,17 +4,17 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import type { RaffleActionResult, RaffleDrawView, RaffleState } from "@/lib/raffle-types";
+import type { RaffleActionResult, RaffleDrawView, RaffleMode as RaffleSessionMode, RaffleState } from "@/lib/raffle-types";
 import styles from "./raffle.module.css";
 
 type RaffleMode = "host" | "stage";
 type RaffleAction =
   | { action: "draw" }
   | { action: "confirm"; drawId: string }
-  | { action: "redraw"; drawId: string };
+  | { action: "redraw"; drawId: string }
+  | { action: "reset" };
 
 const MODE_KEY = "unboxmed_raffle_mode";
-const POLL_INTERVAL_MS = 1_000;
 const REQUEST_TIMEOUT_MS = 10_000;
 
 const confetti = Array.from({ length: 48 }, (_, index) => ({
@@ -133,19 +133,24 @@ function ModePicker({ onChoose, onLogout }: { onChoose: (mode: RaffleMode) => vo
 
 function RaffleHeader({
   mode,
+  sessionMode,
   connected,
   onSwitchMode,
+  onSwitchSession,
   onLogout,
 }: {
   mode: RaffleMode;
+  sessionMode: RaffleSessionMode;
   connected: boolean;
   onSwitchMode: () => void;
+  onSwitchSession: () => void;
   onLogout: () => void;
 }) {
   return (
     <header className={styles.raffleHeader}>
       <div><span>UC26</span><strong>Unbox the Winner</strong></div>
       <div className={styles.headerActions}>
+        <button type="button" onClick={onSwitchSession}>{sessionMode === "rehearsal" ? "Rehearsal" : "Live raffle"}</button>
         <span className={styles.connection} data-connected={connected}>{connected ? "Live" : "Reconnecting"}</span>
         <button type="button" onClick={onSwitchMode}>{mode === "host" ? "Stage mode" : "Host mode"}</button>
         <button type="button" onClick={onLogout}>Sign out</button>
@@ -160,12 +165,14 @@ function HostView({
   busy,
   error,
   onAction,
+  onReset,
 }: {
   state: RaffleState | null;
   now: number;
   busy: boolean;
   error: string;
   onAction: (action: RaffleAction) => void;
+  onReset: () => void;
 }) {
   const current = state?.current ?? null;
   const revealed = Boolean(current && new Date(current.revealAt).getTime() <= now);
@@ -246,6 +253,7 @@ function HostView({
 
       <section className={styles.historyPanel}>
         <div><span>Confirmed winners</span><strong>{state?.history.length ?? 0}</strong></div>
+        {state?.mode === "rehearsal" && state.drawnCount > 0 ? <button type="button" disabled={busy} onClick={onReset}>Reset rehearsal</button> : null}
         {state?.history.length ? (
           <ol>
             {state.history.map((draw) => (
@@ -369,13 +377,13 @@ function StageView({
 export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenticated: boolean }) {
   const [authenticated, setAuthenticated] = useState(initiallyAuthenticated);
   const [mode, setMode] = useState<RaffleMode | null>(null);
+  const [sessionMode, setSessionMode] = useState<RaffleSessionMode>("rehearsal");
   const [state, setState] = useState<RaffleState | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [stageReady, setStageReady] = useState(false);
   const [now, setNow] = useState(0);
-  const pollControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -390,48 +398,19 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
     return () => window.clearInterval(interval);
   }, []);
 
-  const loadState = useCallback(async () => {
-    if (!authenticated || !mode) return;
-    if (pollControllerRef.current) return;
-    const controller = new AbortController();
-    pollControllerRef.current = controller;
-    const timeout = window.setTimeout(() => controller.abort("timeout"), REQUEST_TIMEOUT_MS);
-    try {
-      const response = await fetch("/api/raffle", {
-        cache: "no-store",
-        signal: controller.signal,
-      });
-      if (response.status === 401) {
-        setAuthenticated(false);
-        setMode(null);
-        setConnected(false);
-        return;
-      }
-      if (!response.ok) throw new Error("Could not load raffle state.");
-      setState((await response.json()) as RaffleState);
-      setConnected(true);
-    } catch (loadError) {
-      if (controller.signal.reason !== "timeout" && loadError instanceof DOMException && loadError.name === "AbortError") return;
-      setConnected(false);
-    } finally {
-      window.clearTimeout(timeout);
-      if (pollControllerRef.current === controller) {
-        pollControllerRef.current = null;
-      }
-    }
-  }, [authenticated, mode]);
-
   useEffect(() => {
     if (!authenticated || !mode) return;
-    const frame = window.requestAnimationFrame(() => void loadState());
-    const interval = window.setInterval(() => void loadState(), POLL_INTERVAL_MS);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.clearInterval(interval);
-      pollControllerRef.current?.abort();
-      pollControllerRef.current = null;
+    const events = new EventSource(`/api/raffle/events?mode=${sessionMode}`);
+    const onState = (event: MessageEvent<string>) => {
+      setState(JSON.parse(event.data) as RaffleState);
+      setConnected(true);
     };
-  }, [authenticated, loadState, mode]);
+    events.addEventListener("state", onState as EventListener);
+    events.onerror = () => setConnected(false);
+    return () => {
+      events.close();
+    };
+  }, [authenticated, mode, sessionMode]);
 
   const chooseMode = useCallback((nextMode: RaffleMode) => {
     window.sessionStorage.setItem(MODE_KEY, nextMode);
@@ -455,8 +434,6 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
 
   const runAction = useCallback(async (action: RaffleAction) => {
     if (busy) return;
-    pollControllerRef.current?.abort();
-    pollControllerRef.current = null;
     setBusy(true);
     setError("");
     const controller = new AbortController();
@@ -465,7 +442,7 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
       const response = await fetch("/api/raffle", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(action),
+        body: JSON.stringify({ ...action, mode: sessionMode }),
         signal: controller.signal,
       });
       const payload = (await response.json()) as RaffleActionResult & { message?: string };
@@ -489,7 +466,19 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
       window.clearTimeout(timeout);
       setBusy(false);
     }
-  }, [busy]);
+  }, [busy, sessionMode]);
+
+  const resetRehearsal = useCallback(async () => {
+    if (sessionMode !== "rehearsal" || !window.confirm("Reset all rehearsal draws? Live raffle data will not be affected.")) return;
+    await runAction({ action: "reset" });
+  }, [runAction, sessionMode]);
+
+  const switchSession = useCallback(() => {
+    setState(null);
+    setConnected(false);
+    setSessionMode((current) => current === "rehearsal" ? "live" : "rehearsal");
+    setStageReady(false);
+  }, []);
 
   const enableStage = useCallback(async () => {
     setStageReady(true);
@@ -513,15 +502,15 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
     if (!mode) return <ModePicker onChoose={chooseMode} onLogout={logout} />;
     return (
       <main className={styles.rafflePage} data-mode={mode}>
-        <RaffleHeader mode={mode} connected={connected} onSwitchMode={switchMode} onLogout={logout} />
+        <RaffleHeader mode={mode} sessionMode={sessionMode} connected={connected} onSwitchMode={switchMode} onSwitchSession={switchSession} onLogout={logout} />
         {mode === "host" ? (
-          <HostView state={state} now={now} busy={busy} error={error} onAction={runAction} />
+          <HostView state={state} now={now} busy={busy} error={error} onAction={runAction} onReset={resetRehearsal} />
         ) : (
           <StageView state={state} now={now} ready={stageReady} onReady={enableStage} />
         )}
       </main>
     );
-  }, [authenticated, authenticatedHandler, busy, chooseMode, connected, enableStage, error, logout, mode, now, runAction, stageReady, state, switchMode]);
+  }, [authenticated, authenticatedHandler, busy, chooseMode, connected, enableStage, error, logout, mode, now, resetRehearsal, runAction, sessionMode, stageReady, state, switchMode, switchSession]);
 
   return content;
 }

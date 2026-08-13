@@ -23,6 +23,14 @@ export const raffleDrawStatus = pgEnum("raffle_draw_status", [
   "redrawn",
 ]);
 
+export const raffleMode = pgEnum("raffle_mode", ["rehearsal", "live"]);
+
+export const raffleSessions = pgTable("raffle_sessions", {
+  mode: raffleMode("mode").primaryKey(),
+  revision: integer("revision").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const registrations = pgTable(
   "registrations",
   {
@@ -52,6 +60,7 @@ export const raffleDraws = pgTable(
   {
     id: uuid("id").primaryKey(),
     roundNumber: integer("round_number").notNull(),
+    mode: raffleMode("mode").notNull().default("live"),
     registrationId: uuid("registration_id")
       .notNull()
       .references(() => registrations.id, { onDelete: "restrict" }),
@@ -60,11 +69,11 @@ export const raffleDraws = pgTable(
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   },
   (table) => [
-    uniqueIndex("raffle_draws_registration_unique").on(table.registrationId),
+    uniqueIndex("raffle_draws_mode_registration_unique").on(table.mode, table.registrationId),
     index("raffle_draws_round_idx").on(table.roundNumber),
     index("raffle_draws_status_idx").on(table.status),
     uniqueIndex("raffle_draws_round_active_unique")
-      .on(table.roundNumber)
+      .on(table.mode, table.roundNumber)
       .where(sql`${table.status} in ('selected', 'confirmed')`),
   ],
 );

@@ -47,9 +47,9 @@ Camera scanning requires HTTPS except on localhost. The scanner also accepts a p
 
 ## Staff raffle
 
-Visit `/staff/raffle` and sign in with the same shared staff PIN. Choose **Host controls** on the operator device and **Stage display** on the projector device. Both views use the same URL and synchronize through the persisted raffle state.
+Visit `/staff/raffle` and sign in with the same shared staff PIN. Choose **Host controls** on the operator device and **Stage display** on the projector device. Both views use the same URL and synchronize through a live event stream backed by persisted raffle state.
 
-Only checked-in attendees who have never been drawn are eligible. Run a rehearsal before the event, then clear only the `raffle_draws` table in Supabase before the live raffle.
+Only checked-in attendees who have never been drawn in the selected session are eligible. **Rehearsal** and **Live raffle** are isolated sessions. Use **Reset rehearsal** to clear test draws without touching the live raffle.
 
 ## Vercel variables
 
