@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { IScannerControls } from "@zxing/browser";
+import { DecodeHintType } from "@zxing/library";
 import styles from "./scanner.module.css";
 
 type CheckinResult =
@@ -127,11 +128,28 @@ export function StaffScanner({
 
     if (capabilities.zoom && capabilities.zoom.max > capabilities.zoom.min) {
       const settings = track.getSettings() as CameraSettings;
+      const defaultZoom =
+        capabilities.zoom.min +
+        (capabilities.zoom.max - capabilities.zoom.min) * 0.25;
+      const hasExistingZoom =
+        settings.zoom !== undefined && settings.zoom > capabilities.zoom.min;
+      const zoom = hasExistingZoom ? settings.zoom! : defaultZoom;
+
+      if (!hasExistingZoom) {
+        try {
+          await track.applyConstraints({
+            advanced: [{ zoom: defaultZoom } as MediaTrackConstraintSet],
+          });
+        } catch {
+          // Keep the camera active if its advertised default zoom is rejected.
+        }
+      }
+
       setZoomRange({
         min: capabilities.zoom.min,
         max: capabilities.zoom.max,
         step: capabilities.zoom.step || 0.1,
-        value: settings.zoom ?? capabilities.zoom.min,
+        value: zoom,
       });
     }
   }, []);
@@ -205,7 +223,10 @@ export function StaffScanner({
     setCameraError("");
     try {
       const { BrowserQRCodeReader } = await import("@zxing/browser");
-      const reader = new BrowserQRCodeReader(undefined, { delayBetweenScanAttempts: 180 });
+      const hints = new Map<DecodeHintType, unknown>([
+        [DecodeHintType.TRY_HARDER, true],
+      ]);
+      const reader = new BrowserQRCodeReader(hints, { delayBetweenScanAttempts: 180 });
       controlsRef.current = await reader.decodeFromConstraints(
         {
           video: {

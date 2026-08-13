@@ -14,7 +14,7 @@ type RaffleAction =
   | { action: "redraw"; drawId: string };
 
 const MODE_KEY = "unboxmed_raffle_mode";
-const POLL_INTERVAL_MS = 750;
+const POLL_INTERVAL_MS = 1_000;
 const REQUEST_TIMEOUT_MS = 10_000;
 
 const confetti = Array.from({ length: 48 }, (_, index) => ({

@@ -13,7 +13,10 @@ export function getDatabase() {
   }
 
   const client = postgres(connectionString, {
-    max: 1,
+    // Raffle state loads run two independent queries concurrently, while the
+    // host and stage displays poll at the same time. Keep a small pool so those
+    // reads do not queue behind one another or behind a draw transaction.
+    max: 5,
     prepare: false,
     idle_timeout: 20,
     connect_timeout: 10,
