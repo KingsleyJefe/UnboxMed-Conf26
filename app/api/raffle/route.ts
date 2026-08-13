@@ -55,6 +55,12 @@ export async function POST(request: Request) {
         state: await getRaffleState(),
       }, 409);
     }
+    if (outcome.kind === "lock_busy") {
+      return json({
+        message: "Another raffle action is already in progress. Please try again.",
+        state: await getRaffleState(),
+      }, 409);
+    }
     if (outcome.kind === "no_eligible") {
       return json({
         message: "There are no eligible checked-in attendees left.",

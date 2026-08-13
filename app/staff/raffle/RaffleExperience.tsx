@@ -15,6 +15,7 @@ type RaffleAction =
 
 const MODE_KEY = "unboxmed_raffle_mode";
 const POLL_INTERVAL_MS = 750;
+const REQUEST_TIMEOUT_MS = 10_000;
 
 const confetti = Array.from({ length: 48 }, (_, index) => ({
   id: index,
@@ -394,6 +395,7 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
     if (pollControllerRef.current) return;
     const controller = new AbortController();
     pollControllerRef.current = controller;
+    const timeout = window.setTimeout(() => controller.abort("timeout"), REQUEST_TIMEOUT_MS);
     try {
       const response = await fetch("/api/raffle", {
         cache: "no-store",
@@ -409,9 +411,10 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
       setState((await response.json()) as RaffleState);
       setConnected(true);
     } catch (loadError) {
-      if (loadError instanceof DOMException && loadError.name === "AbortError") return;
+      if (controller.signal.reason !== "timeout" && loadError instanceof DOMException && loadError.name === "AbortError") return;
       setConnected(false);
     } finally {
+      window.clearTimeout(timeout);
       if (pollControllerRef.current === controller) {
         pollControllerRef.current = null;
       }
@@ -456,11 +459,14 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
     pollControllerRef.current = null;
     setBusy(true);
     setError("");
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort("timeout"), REQUEST_TIMEOUT_MS);
     try {
       const response = await fetch("/api/raffle", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(action),
+        signal: controller.signal,
       });
       const payload = (await response.json()) as RaffleActionResult & { message?: string };
       if (response.status === 401) {
@@ -477,9 +483,10 @@ export function RaffleExperience({ initiallyAuthenticated }: { initiallyAuthenti
         return;
       }
     } catch {
-      setError("Could not reach the raffle server.");
+      setError(controller.signal.reason === "timeout" ? "The raffle server took too long. Please try again." : "Could not reach the raffle server.");
       setConnected(false);
     } finally {
+      window.clearTimeout(timeout);
       setBusy(false);
     }
   }, [busy]);

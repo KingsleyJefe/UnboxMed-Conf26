@@ -13,6 +13,15 @@ import type { RaffleDrawView, RaffleState } from "@/lib/raffle-types";
 
 const RAFFLE_ADVISORY_LOCK = 2608152026;
 
+async function tryAcquireRaffleLock(
+  transaction: Parameters<Parameters<ReturnType<typeof getDatabase>["transaction"]>[0]>[0],
+) {
+  const rows = await transaction.execute<{ acquired: boolean }>(
+    sql`select pg_try_advisory_xact_lock(${RAFFLE_ADVISORY_LOCK}) as acquired`,
+  );
+  return rows[0]?.acquired === true;
+}
+
 function toDrawView(draw: {
   id: string;
   roundNumber: number;
@@ -79,7 +88,7 @@ export async function getRaffleState(): Promise<RaffleState> {
 
 export async function startRaffleDraw() {
   return getDatabase().transaction(async (transaction) => {
-    await transaction.execute(sql`select pg_advisory_xact_lock(${RAFFLE_ADVISORY_LOCK})`);
+    if (!(await tryAcquireRaffleLock(transaction))) return { kind: "lock_busy" as const };
 
     const [active] = await transaction
       .select({ id: raffleDraws.id })
@@ -120,7 +129,7 @@ export async function startRaffleDraw() {
 
 export async function confirmRaffleDraw(drawId: string) {
   return getDatabase().transaction(async (transaction) => {
-    await transaction.execute(sql`select pg_advisory_xact_lock(${RAFFLE_ADVISORY_LOCK})`);
+    if (!(await tryAcquireRaffleLock(transaction))) return { kind: "lock_busy" as const };
     const [confirmed] = await transaction
       .update(raffleDraws)
       .set({ status: "confirmed", resolvedAt: new Date() })
@@ -132,7 +141,7 @@ export async function confirmRaffleDraw(drawId: string) {
 
 export async function redrawRaffleDraw(drawId: string) {
   return getDatabase().transaction(async (transaction) => {
-    await transaction.execute(sql`select pg_advisory_xact_lock(${RAFFLE_ADVISORY_LOCK})`);
+    if (!(await tryAcquireRaffleLock(transaction))) return { kind: "lock_busy" as const };
     const [current] = await transaction
       .select({ id: raffleDraws.id, roundNumber: raffleDraws.roundNumber })
       .from(raffleDraws)
