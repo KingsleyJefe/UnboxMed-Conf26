@@ -619,47 +619,64 @@ export function ConferenceLanding() {
         data-nav-surface-section="dark"
         data-transition-color="#431000"
       >
-        <motion.form
-          className={styles.registrationForm}
-          initial={reduceMotion ? false : "hidden"}
-          whileInView="visible"
-          viewport={{ once: false, amount: 0.18 }}
-          variants={staggeredReveal}
-          onSubmit={handleRegistrationSubmit}
-          aria-busy={isSubmitting}
-        >
-          <motion.h2 id="registration-title" variants={reveal}>Save a seat</motion.h2>
-          <motion.label variants={reveal}>
-            <span>Your name or nickname (we don’t judge)</span>
-            <input name="name" autoComplete="name" placeholder="What should we call you?" required />
-          </motion.label>
-          <motion.label variants={reveal}>
-            <span>Email address</span>
-            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
-          </motion.label>
-          <motion.label variants={reveal}>
-            <span>Phone number</span>
-            <input
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="e.g. +234 800 000 0000"
-              required
-            />
-          </motion.label>
-          <motion.button
-            className={styles.registrationButton}
-            type="submit"
-            disabled={isSubmitting}
-            variants={reveal}
-            whileHover={reduceMotion ? undefined : { scale: 1.04, rotate: -1 }}
-            whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+        {siteConfig.registrationOpen ? (
+          <motion.form
+            className={styles.registrationForm}
+            initial={reduceMotion ? false : "hidden"}
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.18 }}
+            variants={staggeredReveal}
+            onSubmit={handleRegistrationSubmit}
+            aria-busy={isSubmitting}
           >
-            {isSubmitting ? "Making your ticket…" : "Get my ticket"}
-          </motion.button>
-          <p className={styles.formStatus} aria-live="polite">{formStatus}</p>
-        </motion.form>
+            <motion.h2 id="registration-title" variants={reveal}>Save a seat</motion.h2>
+            <motion.label variants={reveal}>
+              <span>Your name or nickname (we don’t judge)</span>
+              <input name="name" autoComplete="name" placeholder="What should we call you?" required />
+            </motion.label>
+            <motion.label variants={reveal}>
+              <span>Email address</span>
+              <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
+            </motion.label>
+            <motion.label variants={reveal}>
+              <span>Phone number</span>
+              <input
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="e.g. +234 800 000 0000"
+                required
+              />
+            </motion.label>
+            <motion.button
+              className={styles.registrationButton}
+              type="submit"
+              disabled={isSubmitting}
+              variants={reveal}
+              whileHover={reduceMotion ? undefined : { scale: 1.04, rotate: -1 }}
+              whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+            >
+              {isSubmitting ? "Making your ticket…" : "Get my ticket"}
+            </motion.button>
+            <p className={styles.formStatus} aria-live="polite">{formStatus}</p>
+          </motion.form>
+        ) : (
+          <motion.div
+            className={styles.registrationForm}
+            initial={reduceMotion ? false : "hidden"}
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.18 }}
+            variants={staggeredReveal}
+          >
+            <motion.h2 id="registration-title" variants={reveal}>Registration closed</motion.h2>
+            <motion.p variants={reveal}>Registration for this event is currently closed. Thank you for your interest.</motion.p>
+            <motion.p variants={reveal}>{siteConfig.closing.title}</motion.p>
+            <motion.div variants={reveal}>
+              <TicketButton href="/" />
+            </motion.div>
+          </motion.div>
+        )}
       </section>
     </main>
   );

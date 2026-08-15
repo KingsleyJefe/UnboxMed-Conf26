@@ -38,7 +38,7 @@ export const siteConfig: SiteConfig = {
   timezone: "Africa/Lagos",
   venue: "Cine 21, #10 Factory Rd, Aba",
   registrationPath: "/register",
-  registrationOpen: true,
+  registrationOpen: false,
   ticketPrefix: "UC26",
   calendarDescription:
     "Beyond the Syllabus is an UnboxMed gathering for students and young professionals exploring ambition beyond a single title.",
